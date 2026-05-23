@@ -250,6 +250,7 @@ export default function ApiTester() {
     const activeCount = (list: KeyValue[]) => list.filter((i) => i.enabled && i.key).length;
     const built = targetUrl();
     const displayUrl = url.trim();
+    const methodSkipsBody = ['GET', 'HEAD'].includes(method);
 
     return (
         <div className="tool-shell tool-shell-flex">
@@ -342,6 +343,7 @@ export default function ApiTester() {
                         {tab === 'body' && (
                             <div>
                                 <div className="section-label">Request Body</div>
+                                {methodSkipsBody && <p className="auth-hint">GET/HEAD requests ignore request bodies when sending.</p>}
                                 <label className="toolbar-label" htmlFor="body-content-type">
                                     Content-Type
                                 </label>
@@ -350,7 +352,6 @@ export default function ApiTester() {
                                     className="tool-select body-type-select"
                                     value={bodyContentType}
                                     onChange={(e) => setBodyContentType(e.target.value as BodyContentType)}
-                                    disabled={['GET', 'HEAD'].includes(method)}
                                 >
                                     <option value="application/json">application/json</option>
                                     <option value="text/plain">text/plain</option>
@@ -364,7 +365,6 @@ export default function ApiTester() {
                                     placeholder={'{\n  "key": "value"\n}'}
                                     rows={12}
                                     spellCheck={false}
-                                    disabled={['GET', 'HEAD'].includes(method)}
                                     aria-label="Request body"
                                 />
                             </div>

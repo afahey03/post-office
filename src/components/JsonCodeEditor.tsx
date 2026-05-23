@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
-import { oneDark } from '@codemirror/theme-one-dark';
 
 interface JsonCodeEditorProps {
     value: string;
@@ -37,7 +36,6 @@ export default function JsonCodeEditor({ value, onChange, placeholder, 'aria-lab
                 <CodeMirror
                     value={value}
                     height={`${height}px`}
-                    theme={oneDark}
                     extensions={[json()]}
                     onChange={onChange}
                     placeholder={placeholder}
