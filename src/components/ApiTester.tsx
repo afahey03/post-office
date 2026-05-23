@@ -37,7 +37,7 @@ const METHOD_COLORS: Record<HttpMethod, string> = {
     GET: '#3dd68c',
     POST: '#6e6af0',
     PUT: '#f0a940',
-    PATCH: '#f06464',
+    PATCH: '#f3ef06',
     DELETE: '#f06464',
     HEAD: '#89ddff',
     OPTIONS: '#c792ea',
@@ -134,6 +134,7 @@ export default function ApiTester() {
         abortRef.current = null;
         setLoading(false);
     };
+
 
     const send = async () => {
         const finalTarget = targetUrl();
@@ -257,7 +258,7 @@ export default function ApiTester() {
             <div className="api-bar">
                 <label className="proxy-toggle">
                     <input type="checkbox" checked={useProxy} onChange={(e) => setUseProxy(e.target.checked)} />
-                    Use server proxy (bypass CORS; blocks localhost/private IPs)
+                    Use server proxy (bypasses CORS, blocks localhost/private IPs)
                 </label>
                 <div className="preset-row">
                     {PRESETS.map((p) => (
@@ -288,19 +289,19 @@ export default function ApiTester() {
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && !loading && send()}
-                        placeholder="https://api.example.com/endpoint"
+                        placeholder="https://..."
                         aria-label="Request URL"
                     />
                     <div className="url-row-actions">
                         {loading && (
-                            <button type="button" className="cancel-btn" onClick={cancel} aria-label="Cancel request">
+                            <button type="button" className="cancel-btn cancel-btn-pill" onClick={cancel} aria-label="Cancel request">
                                 <X size={16} aria-hidden />
                                 Cancel
                             </button>
                         )}
                         <button
                             type="button"
-                            className="send-btn send-btn-rounded"
+                            className={`send-btn ${loading ? 'send-btn-full' : 'send-btn-rounded'}`}
                             onClick={send}
                             disabled={loading || !displayUrl}
                             aria-busy={loading}
@@ -322,7 +323,7 @@ export default function ApiTester() {
                     <div className="tab-row">
                         {(['params', 'headers', 'body', 'auth'] as TabKey[]).map((t) => (
                             <button key={t} type="button" className={`tab-btn ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
-                                {t}
+                                {t === 'params' ? 'Params' : t === 'headers' ? 'Headers' : t === 'body' ? 'Body' : 'Auth'}
                                 {t === 'params' && activeCount(params) > 0 && <span className="tab-badge">{activeCount(params)}</span>}
                                 {t === 'headers' && activeCount(headers) > 0 && <span className="tab-badge">{activeCount(headers)}</span>}
                                 {t === 'auth' && authType !== 'none' && <span className="tab-badge">✓</span>}
@@ -341,29 +342,27 @@ export default function ApiTester() {
                             />
                         )}
                         {tab === 'body' && (
-                            <div>
-                                <div className="section-label">Request Body</div>
-                                {methodSkipsBody && <p className="auth-hint">GET/HEAD requests ignore request bodies when sending.</p>}
-                                <label className="toolbar-label" htmlFor="body-content-type">
-                                    Content-Type
-                                </label>
-                                <select
-                                    id="body-content-type"
-                                    className="tool-select body-type-select"
-                                    value={bodyContentType}
-                                    onChange={(e) => setBodyContentType(e.target.value as BodyContentType)}
-                                >
-                                    <option value="application/json">application/json</option>
-                                    <option value="text/plain">text/plain</option>
-                                    <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
-                                    <option value="none">none (no Content-Type)</option>
-                                </select>
+                            <div className="body-tab">
+                                <div className="body-ct-row">
+                                    <label className="panel-label" htmlFor="body-content-type">Content-Type</label>
+                                    <select
+                                        id="body-content-type"
+                                        className="tool-select"
+                                        value={bodyContentType}
+                                        onChange={(e) => setBodyContentType(e.target.value as BodyContentType)}
+                                    >
+                                        <option value="application/json">application/json</option>
+                                        <option value="text/plain">text/plain</option>
+                                        <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+                                        <option value="none">none</option>
+                                    </select>
+                                    {methodSkipsBody && <span className="body-skip-hint">Ignored for {method}</span>}
+                                </div>
                                 <textarea
                                     className="body-input"
                                     value={body}
                                     onChange={(e) => setBody(e.target.value)}
-                                    placeholder={'{\n  "key": "value"\n}'}
-                                    rows={12}
+                                    placeholder={bodyContentType === 'application/json' ? '{\n  "key": "value"\n}' : ''}
                                     spellCheck={false}
                                     aria-label="Request body"
                                 />
@@ -392,12 +391,12 @@ export default function ApiTester() {
                     <div className="tab-row tab-row-response">
                         {(['body', 'headers', 'info'] as ResponseTab[]).map((t) => (
                             <button key={t} type="button" className={`tab-btn ${respTab === t ? 'active' : ''}`} onClick={() => setRespTab(t)}>
-                                {t}
+                                {t === 'body' ? 'Body' : t === 'headers' ? 'Headers' : 'Info'}
                             </button>
                         ))}
                         {response && (
                             <div className="response-meta">
-                                <span style={{ fontSize: '12px', fontWeight: 700, color: statusColor(response.status) }}>
+                                <span className="response-status" style={{ color: statusColor(response.status) }}>
                                     {response.status} {response.statusText}
                                 </span>
                                 <span className="stats-hint">{response.time}ms</span>
@@ -553,7 +552,7 @@ function AuthConfig({
 }) {
     return (
         <div>
-            <p className="auth-hint">Credentials stay in memory only and are not saved when you refresh.</p>
+            <p className="auth-hint">Credentials are kept in memory only — never saved to local storage.</p>
             <div className="section-label">Auth Type</div>
             <div className="auth-type-row">
                 {(['none', 'bearer', 'basic', 'apikey'] as AuthType[]).map((t) => (

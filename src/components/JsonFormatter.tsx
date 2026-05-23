@@ -7,11 +7,11 @@ import { formatJson, type FormatStatus } from '@/lib/formatJson';
 import { syntaxHighlight } from '@/lib/jsonHighlight';
 import { copyToClipboard } from '@/lib/copyToClipboard';
 
-const EXAMPLES = {
-    user: '{"id":1,"name":"Alice Chen","email":"alice@example.com","role":"admin","createdAt":"2024-01-15T10:30:00Z","preferences":{"theme":"dark","notifications":true,"language":"en"},"tags":["developer","beta-tester"]}',
-    error: '{"status":"error","code":422,"message":"Validation failed","errors":[{"field":"email","message":"Invalid format"},{"field":"age","message":"Must be 18+"}],"timestamp":"2024-01-15T10:30:00Z"}',
-    nested: '{"api":{"version":"v2","endpoints":{"users":{"get":"/users","post":"/users","put":"/users/:id"},"auth":{"login":"/auth/login","refresh":"/auth/refresh"}}},"meta":{"rateLimit":1000,"timeout":30}}',
-};
+const EXAMPLES: { label: string; key: string; value: string }[] = [
+    { label: 'User', key: 'user', value: '{"id":1,"name":"Alice Chen","email":"alice@example.com","role":"admin","createdAt":"2024-01-15T10:30:00Z","preferences":{"theme":"dark","notifications":true,"language":"en"},"tags":["developer","beta-tester"]}' },
+    { label: 'Error', key: 'error', value: '{"status":"error","code":422,"message":"Validation failed","errors":[{"field":"email","message":"Invalid format"},{"field":"age","message":"Must be 18+"}],"timestamp":"2024-01-15T10:30:00Z"}' },
+    { label: 'Nested', key: 'nested', value: '{"api":{"version":"v2","endpoints":{"users":{"get":"/users","post":"/users","put":"/users/:id"},"auth":{"login":"/auth/login","refresh":"/auth/refresh"}}},"meta":{"rateLimit":1000,"timeout":30}}' },
+];
 
 const DEBOUNCE_MS = 200;
 
@@ -42,8 +42,8 @@ export default function JsonFormatter() {
         setIndent(val);
     };
 
-    const handleExample = (key: keyof typeof EXAMPLES) => {
-        setInput(EXAMPLES[key]);
+    const handleExample = (value: string) => {
+        setInput(value);
     };
 
     const copy = async () => {
@@ -80,9 +80,9 @@ export default function JsonFormatter() {
         <div className="tool-shell tool-shell-padded">
             <div className="toolbar-row">
                 <span className="toolbar-label">Examples:</span>
-                {(Object.keys(EXAMPLES) as Array<keyof typeof EXAMPLES>).map((k) => (
-                    <button key={k} type="button" className="tool-btn" onClick={() => handleExample(k)}>
-                        {k}
+                {EXAMPLES.map((ex) => (
+                    <button key={ex.key} type="button" className="tool-btn" onClick={() => handleExample(ex.value)}>
+                        {ex.label}
                     </button>
                 ))}
                 <div className="toolbar-actions">
@@ -110,7 +110,6 @@ export default function JsonFormatter() {
                     <div className="panel-header">
                         <div className="panel-header-start">
                             <span className="panel-label">Input</span>
-                            <span className="panel-hint">Paste JSON here</span>
                         </div>
                     </div>
                     <JsonCodeEditor
@@ -140,7 +139,7 @@ export default function JsonFormatter() {
                         </div>
                         <div className="panel-header-end">
                             {stats && (
-                                <span className="stats-hint" title="Keys counts object properties only, not array indices">
+                                <span className="stats-hint" title="Key count includes object properties only, not array indices">
                                     {stats.keys} keys · depth {stats.depth} · {stats.size}
                                 </span>
                             )}
