@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Loader2, Send, X } from 'lucide-react';
+import { ChevronDown, Loader2, Send, X } from 'lucide-react';
 import {
     buildRequestHeaders,
     resolveAbsoluteBase,
@@ -75,9 +75,7 @@ function formatSize(text: string): string {
 const PRESETS = [
     { label: 'Local echo', method: 'GET' as HttpMethod, url: '/api/echo', relative: true },
     { label: 'JSONPlaceholder post', method: 'GET' as HttpMethod, url: 'https://jsonplaceholder.typicode.com/posts/1' },
-    { label: 'JSONPlaceholder users', method: 'GET' as HttpMethod, url: 'https://jsonplaceholder.typicode.com/users' },
-    { label: 'HTTPBin GET', method: 'GET' as HttpMethod, url: 'https://httpbin.org/get' },
-    { label: 'HTTPBin POST', method: 'POST' as HttpMethod, url: 'https://httpbin.org/post' },
+    { label: 'JokeAPI', method: 'GET' as HttpMethod, url: 'https://v2.jokeapi.dev/joke/Programming' }
 ];
 
 function readInitialSaved(): Partial<PersistedApiState> | null {
@@ -271,19 +269,22 @@ export default function ApiTester() {
                     <label className="visually-hidden" htmlFor="http-method">
                         HTTP method
                     </label>
-                    <select
-                        id="http-method"
-                        className="method-select"
-                        value={method}
-                        onChange={(e) => setMethod(e.target.value as HttpMethod)}
-                        style={{ color: METHOD_COLORS[method] }}
-                    >
-                        {(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as HttpMethod[]).map((m) => (
-                            <option key={m} value={m} style={{ color: METHOD_COLORS[m] }}>
-                                {m}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="method-select-wrap" style={{ color: METHOD_COLORS[method] }}>
+                        <select
+                            id="http-method"
+                            className="method-select"
+                            value={method}
+                            onChange={(e) => setMethod(e.target.value as HttpMethod)}
+                            style={{ color: METHOD_COLORS[method] }}
+                        >
+                            {(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as HttpMethod[]).map((m) => (
+                                <option key={m} value={m} style={{ color: METHOD_COLORS[m] }}>
+                                    {m}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown size={12} className="method-chevron" aria-hidden />
+                    </div>
                     <input
                         className="api-input url-input-flex"
                         value={url}
@@ -552,7 +553,7 @@ function AuthConfig({
 }) {
     return (
         <div>
-            <p className="auth-hint">Credentials are kept in memory only — never saved to local storage.</p>
+            <p className="auth-hint">Credentials are kept in memory only - never saved to local storage.</p>
             <div className="section-label">Auth Type</div>
             <div className="auth-type-row">
                 {(['none', 'bearer', 'basic', 'apikey'] as AuthType[]).map((t) => (

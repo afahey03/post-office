@@ -436,10 +436,16 @@ textarea.body-input:focus-visible {
     background: var(--error-dim);
 }
 
+.method-select-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
 .method-select {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    padding: 0 12px;
+    padding: 0 32px 0 12px;
     height: 40px;
     border-radius: 8px 0 0 8px;
     font-size: 13px;
@@ -448,6 +454,15 @@ textarea.body-input:focus-visible {
     cursor: pointer;
     border-right: none;
     font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.method-chevron {
+    position: absolute;
+    right: 14px;
+    pointer-events: none;
 }
 
 textarea.body-input {

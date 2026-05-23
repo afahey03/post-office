@@ -18,6 +18,7 @@ const DEBOUNCE_MS = 200;
 export default function JsonFormatter() {
     const [input, setInput] = useState('');
     const [indent, setIndent] = useState(2);
+    const [compactOutput, setCompactOutput] = useState(false);
     const [output, setOutput] = useState('');
     const [status, setStatus] = useState<FormatStatus>('idle');
     const [error, setError] = useState('');
@@ -25,25 +26,31 @@ export default function JsonFormatter() {
     const [copied, setCopied] = useState(false);
     const [copyError, setCopyError] = useState(false);
 
-    const process = useCallback((raw: string, ind: number) => {
+    const process = useCallback((raw: string, ind: number, compact: boolean) => {
         const res = formatJson(raw, ind);
-        setOutput(res.result);
+        if (res.status === 'valid' && compact) {
+            setOutput(JSON.stringify(JSON.parse(raw)));
+        } else {
+            setOutput(res.result);
+        }
         setStatus(res.status);
         setError(res.error || '');
         setStats(res.stats || null);
     }, []);
 
     useEffect(() => {
-        const timer = window.setTimeout(() => process(input, indent), DEBOUNCE_MS);
+        const timer = window.setTimeout(() => process(input, indent, compactOutput), DEBOUNCE_MS);
         return () => window.clearTimeout(timer);
-    }, [input, indent, process]);
+    }, [input, indent, compactOutput, process]);
 
     const handleIndent = (val: number) => {
         setIndent(val);
+        setCompactOutput(false);
     };
 
     const handleExample = (value: string) => {
         setInput(value);
+        setCompactOutput(false);
     };
 
     const copy = async () => {
@@ -57,8 +64,8 @@ export default function JsonFormatter() {
 
     const minify = () => {
         try {
-            const min = JSON.stringify(JSON.parse(input));
-            setInput(min);
+            JSON.parse(input);
+            setCompactOutput((current) => !current);
         } catch {
             /* invalid json */
         }
@@ -66,6 +73,7 @@ export default function JsonFormatter() {
 
     const clear = () => {
         setInput('');
+        setCompactOutput(false);
         setOutput('');
         setStatus('idle');
         setError('');
@@ -94,13 +102,30 @@ export default function JsonFormatter() {
                         <option value={4}>4 spaces</option>
                         <option value={1}>1 space</option>
                     </select>
-                    <button type="button" className="tool-btn" onClick={minify} aria-label="Minify JSON">
+                    <button
+                        type="button"
+                        className={`tool-btn ${compactOutput && status === 'valid' ? 'accent' : ''}`}
+                        onClick={minify}
+                        aria-label="Minify JSON"
+                        aria-pressed={compactOutput && status === 'valid'}
+                        disabled={status !== 'valid'}
+                    >
                         <Minimize2 size={14} aria-hidden />
-                        Minify
+                        {compactOutput && status === 'valid' ? 'Minified' : 'Minify'}
                     </button>
                     <button type="button" className="tool-btn" onClick={clear} aria-label="Clear JSON">
                         <Eraser size={14} aria-hidden />
                         Clear
+                    </button>
+                    <button
+                        type="button"
+                        className={`tool-btn ${status === 'valid' ? 'accent' : ''}`}
+                        onClick={copy}
+                        disabled={!output}
+                        aria-label="Copy formatted JSON"
+                    >
+                        {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
+                        {copied ? 'Copied' : 'Copy'}
                     </button>
                 </div>
             </div>
@@ -143,16 +168,6 @@ export default function JsonFormatter() {
                                     {stats.keys} keys · depth {stats.depth} · {stats.size}
                                 </span>
                             )}
-                            <button
-                                type="button"
-                                className={`tool-btn ${status === 'valid' ? 'accent' : ''}`}
-                                onClick={copy}
-                                disabled={!output}
-                                aria-label="Copy formatted JSON"
-                            >
-                                {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
-                                {copied ? 'Copied' : 'Copy'}
-                            </button>
                         </div>
                     </div>
                     <div className={`output-panel ${status === 'error' ? 'error' : ''}`}>
