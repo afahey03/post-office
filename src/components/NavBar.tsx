@@ -1,26 +1,17 @@
 'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function NavBar() {
     const pathname = usePathname();
 
     return (
-        <nav style={{
-            background: 'var(--bg-secondary)',
-            borderBottom: '1px solid var(--border)',
-            padding: '0 24px',
-            display: 'flex',
-            alignItems: 'center',
-            height: 'var(--nav-height)',
-            gap: '32px',
-        }}>
-            <span style={{ fontWeight: 600, fontSize: '15px', color: 'var(--accent)', letterSpacing: '-0.02em' }}>
+        <nav className="nav-bar">
+            <Link href="/" className="nav-brand">
                 Post Office
-            </span>
-            <div style={{ display: 'flex', gap: '4px' }}>
-                <NavLink href="/" label="Home" active={pathname === '/'} />
+            </Link>
+            <div className="nav-links">
                 <NavLink href="/json" label="JSON Formatter" active={pathname === '/json'} />
                 <NavLink href="/api" label="API Tester" active={pathname === '/api'} />
             </div>
