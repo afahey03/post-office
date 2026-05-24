@@ -6,6 +6,7 @@
 - [Tech Stack](#tech-stack)
 - [Functionality](#functionality)
 - [Running Locally](#running-locally)
+- [Public Analytics Setup](#public-analytics-setup)
 - [Contribution Instructions](#contribution-instructions)
 - [Examples](#examples)
 
@@ -71,6 +72,65 @@ Other available commands:
 | `npm run lint` | Run ESLint |
 | `npm run typecheck` | Run TypeScript type checks |
 | `npm test` | Run tests |
+
+## Public Analytics Setup
+
+This project supports persistent public counters on the homepage:
+
+- Total JSON payloads formatted
+- Total API endpoints tested
+- Total site visits
+
+### 1) Install dependencies
+
+```bash
+npm install @upstash/redis @vercel/analytics @upstash/ratelimit --legacy-peer-deps
+```
+
+### 2) Add environment variables
+
+Create/update `.env.local`:
+
+```bash
+UPSTASH_REDIS_REST_URL="https://<your-db>.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="<your-upstash-token>"
+
+# Optional: set to false to disable API route rate limiting
+UPSTASH_RATE_LIMIT_ENABLED="true"
+```
+
+Required in Vercel Project Settings as well:
+
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
+- `UPSTASH_RATE_LIMIT_ENABLED` (optional)
+
+### 3) Redis key structure
+
+The counters use namespaced keys:
+
+- `stats:json_formats`
+- `stats:api_tests`
+- `stats:site_visits`
+
+### 4) Tracking flow
+
+- JSON formatter success posts to `POST /api/track/json-format`
+- API tester sends posts to `POST /api/track/api-test`
+- Site visit tracking posts once per browser session to `POST /api/track/visit`
+- Homepage stats load from `GET /api/stats`
+
+### 5) Vercel Analytics
+
+`@vercel/analytics` is mounted in the root layout, so page traffic and usage analytics are available in Vercel.
+
+### 6) Anti-spam and serverless notes
+
+- Upstash Redis stores counters, so values persist across redeploys.
+- Route handlers run in `nodejs` runtime and use async/await with error-safe JSON responses.
+- `@upstash/ratelimit` protects track endpoints from inflated request spam.
+- Visit tracking is session-scoped client-side (best-effort) and reinforced by server-side rate limits.
+- Stats endpoint returns `Cache-Control: no-store` for fresh values.
 
 ## Contribution Instructions
 

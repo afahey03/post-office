@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Copy, Check, Eraser, Minimize2 } from 'lucide-react';
 import JsonCodeEditor from '@/components/JsonCodeEditor';
 import { analyzeJson, formatJson, sortJsonKeys, stripEmptyJson, type FormatStatus } from '@/lib/formatJson';
@@ -14,8 +14,11 @@ const EXAMPLES: { label: string; key: string; value: string }[] = [
 ];
 
 const DEBOUNCE_MS = 200;
+const FORMAT_TRACK_COOLDOWN_MS = 15_000;
 
 export default function JsonFormatter() {
+    const lastTrackedSignature = useRef('');
+    const lastTrackedAt = useRef(0);
     const [input, setInput] = useState('');
     const [indent, setIndent] = useState(2);
     const [compactOutput, setCompactOutput] = useState(false);
@@ -28,21 +31,45 @@ export default function JsonFormatter() {
     const [copied, setCopied] = useState(false);
     const [copyError, setCopyError] = useState(false);
 
+    const trackSuccessfulFormat = useCallback(async (raw: string, formatted: string) => {
+        const signature = `${raw.length}:${formatted.length}:${raw.slice(0, 64)}`;
+        const now = Date.now();
+
+        if (signature === lastTrackedSignature.current && now - lastTrackedAt.current < FORMAT_TRACK_COOLDOWN_MS) {
+            return;
+        }
+
+        lastTrackedSignature.current = signature;
+        lastTrackedAt.current = now;
+
+        try {
+            await fetch('/api/track/json-format', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ source: 'json-formatter' }),
+            });
+        } catch {
+            // Tracking is best-effort only.
+        }
+    }, []);
+
     const process = useCallback((raw: string, ind: number, compact: boolean, sort: boolean, strip: boolean) => {
         const res = formatJson(raw, ind);
         if (res.status === 'valid') {
             const parsed = JSON.parse(raw);
             const transformed = strip ? stripEmptyJson(parsed) : parsed;
             const normalized = sort ? sortJsonKeys(transformed) : transformed;
-            setOutput(compact ? JSON.stringify(normalized) : JSON.stringify(normalized, null, ind));
+            const nextOutput = compact ? JSON.stringify(normalized) : JSON.stringify(normalized, null, ind);
+            setOutput(nextOutput);
             setStats(analyzeJson(normalized));
+            void trackSuccessfulFormat(raw, nextOutput);
         } else {
             setOutput(res.result);
             setStats(res.stats || null);
         }
         setStatus(res.status);
         setError(res.error || '');
-    }, []);
+    }, [trackSuccessfulFormat]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => process(input, indent, compactOutput, sortKeys, stripEmpty), DEBOUNCE_MS);

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Mail } from 'lucide-react';
+import StatsSection from '@/components/StatsSection';
 
 export default function Home() {
     return (
@@ -25,6 +26,8 @@ export default function Home() {
                         </div>
                     </Link>
                 </div>
+
+                <StatsSection />
 
                 <section className="home-contact" aria-label="Contact">
                     <div className="home-contact-title">Built by</div>

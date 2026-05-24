@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Analytics } from '@vercel/analytics/next';
 import "./globals.css";
 import "./tools.css";
 import NavBar from "@/components/NavBar";
+import VisitTracker from '@/components/VisitTracker';
 
 const inter = Inter({
     subsets: ["latin"],
@@ -26,7 +28,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <html lang="en" className={`${inter.variable} ${jetBrainsMono.variable}`}>
             <body>
                 <NavBar />
+                <VisitTracker />
                 <main>{children}</main>
+                <Analytics />
             </body>
         </html>
     );

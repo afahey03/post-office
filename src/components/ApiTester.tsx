@@ -238,6 +238,18 @@ export default function ApiTester() {
         });
     }, [method, url, params, headers, body, bodyContentType, authType, apiKeyHeader, useProxy, timeoutMs]);
 
+    const trackApiTest = useCallback(async () => {
+        try {
+            await fetch('/api/track/api-test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ source: 'api-tester' }),
+            });
+        } catch {
+            // Tracking is best-effort only.
+        }
+    }, []);
+
     const send = useCallback(async () => {
         const finalTarget = targetUrl();
         if (!finalTarget) return;
@@ -324,6 +336,7 @@ export default function ApiTester() {
             };
             pushApiHistoryEntry(nextHistoryEntry);
             setHistory(loadApiHistory());
+            void trackApiTest();
         } catch (e) {
             if ((e as Error).name === 'AbortError') {
                 setError('Request timed out or was cancelled');
@@ -371,6 +384,7 @@ export default function ApiTester() {
         useProxy,
         origin,
         snapshot,
+        trackApiTest,
     ]);
 
     const copyResponseBody = useCallback(async () => {
