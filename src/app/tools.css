@@ -1026,9 +1026,20 @@ textarea.body-input:focus {
         justify-content: flex-start;
     }
 
+    .toolbar-row {
+        align-items: stretch;
+    }
+
     .api-meta-row,
     .api-tools-row {
         align-items: stretch;
+    }
+
+    .toolbar-actions {
+        width: 100%;
+        margin-left: 0;
+        flex-wrap: wrap;
+        justify-content: flex-start;
     }
 
     .timeout-input,
