@@ -2,7 +2,19 @@
 
 A lightweight JSON formatter and API tester built with Next.js
 
-## Features
+## Table of Contents
+
+- [Description](#description)
+- [Functionality](#functionality)
+- [Running Locally](#running-locally)
+- [Contribution Instructions](#contribution-instructions)
+- [Examples](#examples)
+
+## Description
+
+Post Office is a browser-based developer tool that combines a JSON formatter and a full-featured API tester in one place. It is designed to be fast, keyboard-friendly, and dependency-light — no account required, no data sent to third-party servers.
+
+## Functionality
 
 ### JSON Formatter
 - Paste raw JSON -> instant format with syntax highlighting
@@ -30,6 +42,44 @@ A lightweight JSON formatter and API tester built with Next.js
 - Recent request history (session)
 - Saved requests collections (local)
 - Keyboard shortcut to send request
+
+## Running Locally
+
+**Prerequisites:** Node.js 18+
+
+```bash
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+Other available commands:
+
+| Command | Description |
+|---|---|
+| `npm run build` | Production build |
+| `npm run start` | Start the production server |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run TypeScript type checks |
+| `npm test` | Run tests |
+
+## Contribution Instructions
+
+1. Fork the repository and create a feature branch from `main`.
+2. Install dependencies with `npm install`.
+3. Make your changes and ensure all checks pass:
+   ```bash
+   npm run lint
+   npm run typecheck
+   npm test
+   ```
+4. Open a pull request against `main` with a clear description of what was changed and why.
+
+Please keep pull requests focused — one feature or fix per PR.
 
 ## Examples
 
