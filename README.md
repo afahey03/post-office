@@ -1,10 +1,9 @@
 # Post Office
 
-A lightweight JSON formatter and API tester built with Next.js
-
 ## Table of Contents
 
 - [Description](#description)
+- [Tech Stack](#tech-stack)
 - [Functionality](#functionality)
 - [Running Locally](#running-locally)
 - [Contribution Instructions](#contribution-instructions)
@@ -12,7 +11,13 @@ A lightweight JSON formatter and API tester built with Next.js
 
 ## Description
 
-Post Office is a browser-based developer tool that combines a JSON formatter and a full-featured API tester in one place. It is designed to be fast, keyboard-friendly, and dependency-light — no account required, no data sent to third-party servers.
+Post Office is a browser-based developer tool that combines a JSON formatter and an HTTP API tester in one place. It is designed to be fast, keyboard-friendly, and dependency-light - no account required, no data sent to third-party servers.
+
+## Tech Stack
+
+- Next.js
+- TypeScript
+- Tailwind
 
 ## Functionality
 
@@ -79,7 +84,7 @@ Other available commands:
    ```
 4. Open a pull request against `main` with a clear description of what was changed and why.
 
-Please keep pull requests focused — one feature or fix per PR.
+Please keep pull requests focused - one feature or fix per PR.
 
 ## Examples
 
