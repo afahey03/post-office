@@ -75,7 +75,7 @@ function formatSize(text: string): string {
 const PRESETS = [
     { label: 'Local echo', method: 'GET' as HttpMethod, url: '/api/echo', relative: true },
     { label: 'JSONPlaceholder post', method: 'GET' as HttpMethod, url: 'https://jsonplaceholder.typicode.com/posts/1' },
-    { label: 'JokeAPI', method: 'GET' as HttpMethod, url: 'https://v2.jokeapi.dev/joke/Programming?blacklistFlags=nsfw,religious,political,racist,sexist,explicit' }
+    { label: 'JokeAPI', method: 'GET' as HttpMethod, url: 'https://v2.jokeapi.dev/joke/Programming?safe-mode' }
 ];
 
 function readInitialSaved(): Partial<PersistedApiState> | null {
