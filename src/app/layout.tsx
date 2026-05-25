@@ -21,6 +21,10 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
     title: "Post Office",
     description: "JSON Formatter & API Tester",
+    icons: {
+        icon: "/favicon.ico",
+        shortcut: "/favicon.ico",
+    },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
