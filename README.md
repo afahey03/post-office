@@ -1,244 +1,107 @@
 # Post Office
 
-## Table of Contents
+Post Office is a lightweight, browser-based developer tool for two daily tasks:
 
-- [Description](#description)
-- [Tech Stack](#tech-stack)
-- [Functionality](#functionality)
-- [Running Locally](#running-locally)
-- [Public Analytics Setup](#public-analytics-setup)
-- [Contribution Instructions](#contribution-instructions)
-- [Examples](#examples)
+- Formatting and validating JSON
+- Testing HTTP APIs without leaving your browser
 
-## Description
+It is fast, account-free, and local-first.
 
-Created because I don't like needing to install Postman, Post Office is a browser-based developer tool that combines a JSON formatter and an HTTP API tester in one place. It is designed to be fast, keyboard-friendly, and dependency-light - no account required, no data sent to third-party servers.
+## Why Developers Like It
 
-## Tech Stack
+- No desktop client or login required
+- JSON formatter and API tester in one UI
+- Keyboard-friendly workflows
+- Direct request mode and proxy mode for CORS-challenging endpoints
+- Built with modern, typed web tooling
 
-- Next.js
-- React
-- TypeScript
-- Tailwind
-- Redis
-
-## Functionality
+## Feature Snapshot
 
 ### JSON Formatter
-- Paste raw JSON -> instant format with syntax highlighting
-- Indent control
-- Minify mode
-- Sort keys toggle
-- Strip empty fields toggle
-- Parse error display with clear messaging
-- JSON stats: key count, nesting depth, byte size
-- One-click copy
-- Keyboard shortcuts for minify/copy
+
+- Pretty print and minify
+- Sort keys and strip empty fields
+- Syntax highlighting and parse errors
+- JSON metrics: key count, depth, and byte size
+- One-click copy and shortcuts
 
 ### API Tester
-- All HTTP methods
-- Query params editor with live URL preview
-- Custom headers
-- Request body editor
-- Auth: Bearer Token, Basic Auth, API Key
-- Response view: formatted JSON body, headers, request info
-- Response controls: copy, download, raw/pretty toggle
-- Response time + size metrics
-- Quick-load presets
-- Request timeout control (direct + proxy)
-- cURL import and cURL export
-- Recent request history (session)
-- Saved requests collections (local)
-- Keyboard shortcut to send request
 
-## Running Locally
+- Supports all HTTP methods
+- Query params, headers, and body editor
+- Auth support: Bearer, Basic, API Key
+- Response viewer with body, headers, timing, and size
+- cURL import/export
+- Timeout control and request history
+- Save reusable requests locally
 
-**Prerequisites:** Node.js 18+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20+
+
+### Run locally
 
 ```bash
-# Install dependencies
 npm install
-
-# Start the development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Then open http://localhost:3000.
 
-Other available commands:
+### Common commands
 
-| Command | Description |
+| Command | Purpose |
 |---|---|
-| `npm run build` | Production build |
-| `npm run start` | Start the production server |
-| `npm run lint` | Run ESLint |
-| `npm run typecheck` | Run TypeScript type checks |
-| `npm test` | Run tests |
+| npm run dev | Start local dev server |
+| npm run build | Build production app |
+| npm run start | Run production build |
+| npm run lint | Run ESLint |
+| npm run typecheck | Run TypeScript checks |
+| npm test | Run unit tests |
 
-## Public Analytics Setup
+## Optional Analytics and Public Counters
 
-This project supports persistent public counters on the homepage:
+Post Office can track public usage counters (formats, API tests, visits) with Upstash Redis.
 
-- Total JSON payloads formatted
-- Total API endpoints tested
-- Total site visits
+1. Duplicate .env.local.example as .env.local.
 
-### 1) Install dependencies
-
-```bash
-npm install @upstash/redis @vercel/analytics @upstash/ratelimit --legacy-peer-deps
-```
-
-### 2) Add environment variables
-
-Create/update `.env.local`:
+2. Fill values in .env.local:
 
 ```bash
 UPSTASH_REDIS_REST_URL="https://<your-db>.upstash.io"
 UPSTASH_REDIS_REST_TOKEN="<your-upstash-token>"
-
-# Optional: set to false to disable API route rate limiting
 UPSTASH_RATE_LIMIT_ENABLED="true"
 ```
 
-Required in Vercel Project Settings as well:
+3. Deploy with the same variables in your hosting provider.
 
-- `UPSTASH_REDIS_REST_URL`
-- `UPSTASH_REDIS_REST_TOKEN`
-- `UPSTASH_RATE_LIMIT_ENABLED` (optional)
+Counters use these Redis keys:
 
-### 3) Redis key structure
+- stats:json_formats
+- stats:api_tests
+- stats:site_visits
 
-The counters use namespaced keys:
+## Contributing
 
-- `stats:json_formats`
-- `stats:api_tests`
-- `stats:site_visits`
+Contributions are welcome, from small fixes to new features.
 
-### 4) Tracking flow
+- Start here: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Collaboration workflow: [COLLABORATION.md](COLLABORATION.md)
+- Community expectations: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
-- JSON formatter success posts to `POST /api/track/json-format`
-- API tester sends posts to `POST /api/track/api-test`
-- Site visit tracking posts once per browser session to `POST /api/track/visit`
-- Homepage stats load from `GET /api/stats`
+If you are looking for a first contribution, documentation clarity, test coverage, and UX polish are great starting points.
 
-### 5) Vercel Analytics
+## Project Stack
 
-`@vercel/analytics` is mounted in the root layout, so page traffic and usage analytics are available in Vercel.
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Vitest
+- Upstash Redis
 
-### 6) Anti-spam and serverless notes
+## License
 
-- Upstash Redis stores counters, so values persist across redeploys.
-- Route handlers run in `nodejs` runtime and use async/await with error-safe JSON responses.
-- `@upstash/ratelimit` protects track endpoints from inflated request spam.
-- Visit tracking is session-scoped client-side (best-effort) and reinforced by server-side rate limits.
-- Stats endpoint returns `Cache-Control: no-store` for fresh values.
-
-## Contribution Instructions
-
-1. Fork the repository and create a feature branch from `main`.
-2. Install dependencies with `npm install`.
-3. Make your changes and ensure all checks pass:
-   ```bash
-   npm run lint
-   npm run typecheck
-   npm test
-   ```
-4. Open a pull request against `main` with a clear description of what was changed and why.
-
-Please keep pull requests focused - one feature or fix per PR.
-
-## Examples
-
-### JSON Formatter
-
-1. Validate and format API payload
-
-Paste:
-
-```json
-{"user":{"id":42,"name":"Aidan"},"active":true,"tags":["dev","qa"]}
-```
-
-Set indent to `2 spaces` and get readable output with syntax highlighting and stats.
-
-2. Normalize object structure before sharing
-
-Paste JSON with mixed key order, then enable:
-- `Sort keys`
-- `Strip empty`
-
-This is useful for clean diffs in PRs and consistent snapshots in tests.
-
-3. Compact large JSON for transport
-
-Use `Minify` to convert pretty JSON into a compact one-line payload for query params, logs, or lightweight storage.
-
-4. Keyboard-driven workflow
-
-- `Ctrl/Cmd + Shift + M`: toggle minify
-- `Ctrl/Cmd + Shift + C`: copy output
-
-### API Tester
-
-1. Quick GET request with query params
-
-- Method: `GET`
-- URL: `https://jsonplaceholder.typicode.com/posts`
-- Params:
-	- `userId = 1`
-
-Review formatted response body, headers, status, response time, and size.
-
-2. Authenticated POST JSON request
-
-- Method: `POST`
-- URL: `https://httpbin.org/post`
-- Headers: `X-Trace-Id: demo-001`
-- Auth: `Bearer Token`
-- Body Content-Type: `application/json`
-- Body:
-
-```json
-{
-	"title": "Post Office Demo",
-	"priority": "high"
-}
-```
-
-3. Use proxy mode for CORS-blocked endpoints
-
-Enable `Use server proxy` when direct browser requests fail due to CORS. The proxy keeps localhost/private-network safeguards in place.
-
-4. cURL import/export
-
-Import:
-
-```bash
-curl -X POST -H "Content-Type: application/json" --data-raw '{"name":"demo"}' https://httpbin.org/post
-```
-
-Then use `Copy cURL` to export the current request state back to terminal-friendly format.
-
-5. Timeout tuning for unstable endpoints
-
-Set `Timeout (ms)` (for example `10000`) before sending. Useful for quickly identifying slow or non-responsive APIs.
-
-6. Reuse requests with history and collections
-
-- `Recent history`: reload recently sent requests (session-scoped)
-- `Save request as...`: persist named requests in local collections
-
-This makes repeated debugging and regression checks much faster.
-
-7. Response tools
-
-- `Copy body`
-- `Download`
-- `Pretty/Raw` toggle for JSON responses
-
-Great for sharing payloads in tickets, reproducing issues, and comparing response shapes.
-
-8. Keyboard shortcut to send
-
-- `Ctrl/Cmd + Enter`: send request
+Licensed under the MIT License. See [LICENSE](LICENSE).
