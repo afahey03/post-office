@@ -12,7 +12,7 @@
 
 ## Description
 
-Post Office is a browser-based developer tool that combines a JSON formatter and an HTTP API tester in one place. It is designed to be fast, keyboard-friendly, and dependency-light - no account required, no data sent to third-party servers.
+Created because I don't like needing to install Postman, Post Office is a browser-based developer tool that combines a JSON formatter and an HTTP API tester in one place. It is designed to be fast, keyboard-friendly, and dependency-light - no account required, no data sent to third-party servers.
 
 ## Tech Stack
 
