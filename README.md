@@ -7,7 +7,7 @@ Post Office is a lightweight, browser-based developer tool for two daily tasks:
 
 It is fast, account-free, and local-first.
 
-## Why Developers Like It
+## Why I Made It
 
 - No desktop client or login required
 - JSON formatter and API tester in one UI
@@ -82,16 +82,6 @@ Counters use these Redis keys:
 - stats:json_formats
 - stats:api_tests
 - stats:site_visits
-
-## Contributing
-
-Contributions are welcome, from small fixes to new features.
-
-- Start here: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Collaboration workflow: [COLLABORATION.md](COLLABORATION.md)
-- Community expectations: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-
-If you are looking for a first contribution, documentation clarity, test coverage, and UX polish are great starting points.
 
 ## Project Stack
 
