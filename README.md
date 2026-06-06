@@ -7,7 +7,7 @@ Post Office is a lightweight, browser-based developer tool for two daily tasks:
 
 It is fast, account-free, and local-first.
 
-## Why I Made It
+## Why Developers Like It
 
 - No desktop client or login required
 - JSON formatter and API tester in one UI
