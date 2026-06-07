@@ -7,6 +7,9 @@ Post Office is a lightweight, browser-based developer tool for two daily tasks:
 
 It is fast, account-free, and local-first.
 
+<img width="1918" height="908" alt="image" src="https://github.com/user-attachments/assets/feeab20f-440b-4508-a0f5-902cdfb32124" />
+<img width="1917" height="907" alt="image" src="https://github.com/user-attachments/assets/c5dd72c0-5b23-4f8f-8239-2255b09d5692" />
+
 ## Why This Exists
 
 - No desktop client or login required
