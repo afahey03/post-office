@@ -60,9 +60,24 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+  e2e:
+    name: E2E
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
   deploy:
     name: Deploy to Vercel
-    needs: [lint, typecheck, test, build]
+    needs: [lint, typecheck, test, build, e2e]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production

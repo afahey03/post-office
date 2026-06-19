@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Copy, Check, Eraser, Minimize2 } from 'lucide-react';
+import { Copy, Check, Eraser, Minimize2, ShieldCheck } from 'lucide-react';
 import JsonCodeEditor from '@/components/JsonCodeEditor';
 import { processJson, type FormatStatus } from '@/lib/formatJson';
+import { validateJsonAgainstSchema } from '@/lib/jsonSchema';
 import { syntaxHighlight } from '@/lib/jsonHighlight';
 import { copyToClipboard } from '@/lib/copyToClipboard';
 
@@ -12,6 +13,16 @@ const EXAMPLES: { label: string; key: string; value: string }[] = [
     { label: 'Error', key: 'error', value: '{"status":"error","code":422,"message":"Validation failed","errors":[{"field":"email","message":"Invalid format"},{"field":"age","message":"Must be 18+"}],"timestamp":"2024-01-15T10:30:00Z"}' },
     { label: 'Nested', key: 'nested', value: '{"api":{"version":"v2","endpoints":{"users":{"get":"/users","post":"/users","put":"/users/:id"},"auth":{"login":"/auth/login","refresh":"/auth/refresh"}}},"meta":{"rateLimit":1000,"timeout":30}}' },
 ];
+
+const EXAMPLE_SCHEMA = `{
+  "type": "object",
+  "required": ["id", "name"],
+  "properties": {
+    "id": { "type": "number" },
+    "name": { "type": "string" },
+    "email": { "type": "string" }
+  }
+}`;
 
 const DEBOUNCE_MS = 200;
 const FORMAT_TRACK_COOLDOWN_MS = 15_000;
@@ -24,6 +35,10 @@ export default function JsonFormatter() {
     const [compactOutput, setCompactOutput] = useState(false);
     const [sortKeys, setSortKeys] = useState(false);
     const [stripEmpty, setStripEmpty] = useState(false);
+    const [schemaEnabled, setSchemaEnabled] = useState(false);
+    const [schemaInput, setSchemaInput] = useState('');
+    const [schemaErrors, setSchemaErrors] = useState<string[]>([]);
+    const [schemaValid, setSchemaValid] = useState<boolean | null>(null);
     const [output, setOutput] = useState('');
     const [status, setStatus] = useState<FormatStatus>('idle');
     const [error, setError] = useState('');
@@ -53,21 +68,39 @@ export default function JsonFormatter() {
         }
     }, []);
 
-    const process = useCallback((raw: string, ind: number, compact: boolean, sort: boolean, strip: boolean) => {
-        const res = processJson(raw, { indent: ind, compact, sortKeys: sort, stripEmpty: strip });
-        setOutput(res.output);
-        setStats(res.stats);
-        setStatus(res.status);
-        setError(res.error || '');
-        if (res.status === 'valid') {
-            void trackSuccessfulFormat(raw, res.output);
-        }
-    }, [trackSuccessfulFormat]);
+    const process = useCallback(
+        (raw: string, ind: number, compact: boolean, sort: boolean, strip: boolean, validateSchema: boolean, schema: string) => {
+            const res = processJson(raw, { indent: ind, compact, sortKeys: sort, stripEmpty: strip });
+            setOutput(res.output);
+            setStats(res.stats);
+            setStatus(res.status);
+            setError(res.error || '');
+
+            if (res.status === 'valid' && res.parsed !== null) {
+                if (validateSchema && schema.trim()) {
+                    const validation = validateJsonAgainstSchema(res.parsed, schema);
+                    setSchemaValid(validation.valid);
+                    setSchemaErrors(validation.errors);
+                } else {
+                    setSchemaValid(null);
+                    setSchemaErrors([]);
+                }
+                void trackSuccessfulFormat(raw, res.output);
+            } else {
+                setSchemaValid(null);
+                setSchemaErrors([]);
+            }
+        },
+        [trackSuccessfulFormat],
+    );
 
     useEffect(() => {
-        const timer = window.setTimeout(() => process(input, indent, compactOutput, sortKeys, stripEmpty), DEBOUNCE_MS);
+        const timer = window.setTimeout(
+            () => process(input, indent, compactOutput, sortKeys, stripEmpty, schemaEnabled, schemaInput),
+            DEBOUNCE_MS,
+        );
         return () => window.clearTimeout(timer);
-    }, [input, indent, compactOutput, sortKeys, stripEmpty, process]);
+    }, [input, indent, compactOutput, sortKeys, stripEmpty, schemaEnabled, schemaInput, process]);
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
@@ -130,6 +163,8 @@ export default function JsonFormatter() {
         setCompactOutput(false);
         setSortKeys(false);
         setStripEmpty(false);
+        setSchemaErrors([]);
+        setSchemaValid(null);
         setOutput('');
         setStatus('idle');
         setError('');
@@ -139,6 +174,8 @@ export default function JsonFormatter() {
 
     const statusColor = status === 'valid' ? 'var(--success)' : status === 'error' ? 'var(--error)' : 'var(--text-muted)';
     const statusBg = status === 'valid' ? 'var(--success-dim)' : status === 'error' ? 'var(--error-dim)' : 'transparent';
+    const schemaColor =
+        schemaValid === true ? 'var(--success)' : schemaValid === false ? 'var(--error)' : 'var(--text-muted)';
 
     return (
         <div className="tool-shell tool-shell-padded">
@@ -187,6 +224,15 @@ export default function JsonFormatter() {
                         <Minimize2 size={14} aria-hidden />
                         {compactOutput && status === 'valid' ? 'Minified' : 'Minify'}
                     </button>
+                    <button
+                        type="button"
+                        className={`tool-btn ${schemaEnabled ? 'accent' : ''}`}
+                        onClick={() => setSchemaEnabled((current) => !current)}
+                        aria-pressed={schemaEnabled}
+                    >
+                        <ShieldCheck size={14} aria-hidden />
+                        Schema
+                    </button>
                     <button type="button" className="tool-btn" onClick={clear} aria-label="Clear JSON">
                         <Eraser size={14} aria-hidden />
                         Clear
@@ -203,6 +249,37 @@ export default function JsonFormatter() {
                     </button>
                 </div>
             </div>
+
+            {schemaEnabled && (
+                <div className="schema-panel">
+                    <div className="schema-panel-header">
+                        <span className="panel-label">JSON Schema</span>
+                        <button type="button" className="tool-btn" onClick={() => setSchemaInput(EXAMPLE_SCHEMA)}>
+                            Load example
+                        </button>
+                        {schemaValid !== null && status === 'valid' && (
+                            <span className="status-pill" style={{ color: schemaColor, border: `1px solid ${schemaColor}40` }}>
+                                {schemaValid ? '✓ schema valid' : '✗ schema invalid'}
+                            </span>
+                        )}
+                    </div>
+                    <textarea
+                        className="schema-input"
+                        value={schemaInput}
+                        onChange={(e) => setSchemaInput(e.target.value)}
+                        placeholder="Paste a JSON Schema (draft-07) to validate input"
+                        spellCheck={false}
+                        aria-label="JSON Schema"
+                    />
+                    {schemaErrors.length > 0 && (
+                        <ul className="schema-errors">
+                            {schemaErrors.map((item) => (
+                                <li key={item}>{item}</li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            )}
 
             <div className="split-2 split-fill">
                 <div className="panel-column">

@@ -6,6 +6,7 @@ import {
     PROXY_MAX_RESPONSE_BYTES,
 } from '@/lib/proxyValidate';
 import { enforceProxyRateLimit } from '@/lib/ratelimit';
+import { buildNodeFormData, estimateMultipartSize, type ProxyMultipartPart } from '@/lib/multipart';
 import { readResponseBodyWithLimit } from '@/lib/readResponseBody';
 
 export const runtime = 'nodejs';
@@ -25,6 +26,8 @@ interface ProxyRequestBody {
     method?: string;
     headers?: Record<string, string>;
     body?: string;
+    bodyMode?: 'text' | 'multipart';
+    multipart?: ProxyMultipartPart[];
     timeoutMs?: number;
 }
 
@@ -57,7 +60,7 @@ export async function POST(request: Request) {
         return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const { url, method = 'GET', headers = {}, body, timeoutMs } = payload;
+    const { url, method = 'GET', headers = {}, body, bodyMode = 'text', multipart = [], timeoutMs } = payload;
     if (!url || typeof url !== 'string') {
         return Response.json({ error: 'url is required' }, { status: 400 });
     }
@@ -69,26 +72,37 @@ export async function POST(request: Request) {
         return Response.json({ error: (e as Error).message }, { status: 400 });
     }
 
-    const bodyBytes = body ? new TextEncoder().encode(body).length : 0;
+    const isMultipart = bodyMode === 'multipart';
+    const bodyBytes = isMultipart ? estimateMultipartSize(multipart) : body ? new TextEncoder().encode(body).length : 0;
     if (bodyBytes > PROXY_MAX_BODY_BYTES) {
         return Response.json({ error: 'Request body too large' }, { status: 413 });
     }
 
     const forwardHeaders = new Headers();
     Object.entries(headers).forEach(([key, value]) => {
-        if (!FORWARD_HEADER_BLOCK.has(key.toLowerCase())) {
-            forwardHeaders.set(key, value);
-        }
+        const lower = key.toLowerCase();
+        if (FORWARD_HEADER_BLOCK.has(lower)) return;
+        if (isMultipart && lower === 'content-type') return;
+        forwardHeaders.set(key, value);
     });
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), clampProxyTimeoutMs(timeoutMs));
 
     try {
+        let upstreamBody: BodyInit | undefined;
+        if (!['GET', 'HEAD'].includes(method.toUpperCase())) {
+            if (isMultipart) {
+                upstreamBody = buildNodeFormData(multipart);
+            } else if (body) {
+                upstreamBody = body;
+            }
+        }
+
         const upstream = await fetch(target.toString(), {
             method: method.toUpperCase(),
             headers: forwardHeaders,
-            body: body && !['GET', 'HEAD'].includes(method.toUpperCase()) ? body : undefined,
+            body: upstreamBody,
             signal: controller.signal,
             redirect: 'follow',
         });

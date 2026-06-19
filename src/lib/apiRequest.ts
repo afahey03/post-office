@@ -1,9 +1,15 @@
 import { encodeBasicAuth } from './base64';
 import { buildUrlWithParams, type QueryParam } from './buildUrl';
+import { substituteVariables } from './environments';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 export type AuthType = 'none' | 'bearer' | 'basic' | 'apikey';
-export type BodyContentType = 'none' | 'application/json' | 'text/plain' | 'application/x-www-form-urlencoded';
+export type BodyContentType =
+    | 'none'
+    | 'application/json'
+    | 'text/plain'
+    | 'application/x-www-form-urlencoded'
+    | 'multipart/form-data';
 
 export interface HeaderRow {
     key: string;
@@ -18,6 +24,14 @@ export interface AuthConfig {
     basicPass: string;
     apiKey: string;
     apiKeyHeader: string;
+}
+
+export function applyVariablesToRows(rows: HeaderRow[], variables: Record<string, string>): HeaderRow[] {
+    return rows.map((row) => ({
+        ...row,
+        key: substituteVariables(row.key, variables),
+        value: substituteVariables(row.value, variables),
+    }));
 }
 
 export function buildRequestHeaders(
@@ -43,7 +57,13 @@ export function buildRequestHeaders(
         headers[auth.apiKeyHeader || 'X-API-Key'] = auth.apiKey;
     }
 
-    if (hasBody && bodyContentType !== 'none' && !headers['Content-Type'] && !headers['content-type']) {
+    if (
+        hasBody &&
+        bodyContentType !== 'none' &&
+        bodyContentType !== 'multipart/form-data' &&
+        !headers['Content-Type'] &&
+        !headers['content-type']
+    ) {
         headers['Content-Type'] = bodyContentType;
     }
 
@@ -63,8 +83,11 @@ export function resolveRequestUrl(
     params: QueryParam[],
     useProxy: boolean,
     origin = '',
+    variables: Record<string, string> = {},
 ): { fetchUrl: string; targetUrl: string } {
-    const targetUrl = buildUrlWithParams(resolveAbsoluteBase(url, origin), params);
+    const resolvedUrl = substituteVariables(url, variables);
+    const resolvedParams = applyVariablesToRows(params, variables);
+    const targetUrl = buildUrlWithParams(resolveAbsoluteBase(resolvedUrl, origin), resolvedParams);
     if (!useProxy) {
         return { fetchUrl: targetUrl, targetUrl };
     }

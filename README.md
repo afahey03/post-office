@@ -24,6 +24,7 @@ It is fast, account-free, and local-first.
 
 - Pretty print and minify
 - Sort keys and strip empty fields
+- JSON Schema validation (draft-07)
 - Syntax highlighting and parse errors
 - JSON metrics: key count, depth, and byte size
 - One-click copy and shortcuts
@@ -32,11 +33,14 @@ It is fast, account-free, and local-first.
 
 - Supports all HTTP methods
 - Query params, headers, and body editor
+- Multipart form-data with file uploads
+- Environments with `{{variable}}` substitution
 - Auth support: Bearer, Basic, API Key
 - Response viewer with body, headers, timing, and size
 - cURL import/export
 - Timeout control and request history
 - Save reusable requests locally
+- Import/export collections and environments as JSON
 
 ## Quick Start
 
@@ -63,6 +67,7 @@ Then open http://localhost:3000.
 | npm run lint | Run ESLint |
 | npm run typecheck | Run TypeScript checks |
 | npm test | Run unit tests |
+| npm run test:e2e | Run Playwright E2E tests |
 
 ## Optional Analytics and Public Counters
 
@@ -97,6 +102,8 @@ Counters use these Redis keys:
 - TypeScript
 - Tailwind CSS
 - Vitest
+- Playwright
+- Ajv
 - Upstash Redis
 
 ## License

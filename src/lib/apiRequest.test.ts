@@ -23,6 +23,16 @@ describe('buildRequestHeaders', () => {
         expect(headers['Content-Type']).toBeUndefined();
     });
 
+    it('skips content type for multipart bodies', () => {
+        const headers = buildRequestHeaders(
+            [],
+            { type: 'none', bearerToken: '', basicUser: '', basicPass: '', apiKey: '', apiKeyHeader: 'X-API-Key' },
+            'multipart/form-data',
+            true,
+        );
+        expect(headers['Content-Type']).toBeUndefined();
+    });
+
     it('does not overwrite explicit content-type header', () => {
         const headers = buildRequestHeaders(
             [{ key: 'content-type', value: 'text/plain', enabled: true }],
@@ -61,5 +71,16 @@ describe('resolveRequestUrl', () => {
     it('falls back to relative proxy endpoint without origin', () => {
         const res = resolveRequestUrl('https://example.com', [], true);
         expect(res.fetchUrl).toBe('/api/proxy');
+    });
+
+    it('substitutes environment variables in URL and params', () => {
+        const res = resolveRequestUrl(
+            '{{baseUrl}}/users',
+            [{ key: 'q', value: '{{term}}', enabled: true }],
+            false,
+            '',
+            { baseUrl: 'https://api.example.com', term: 'hello' },
+        );
+        expect(res.targetUrl).toBe('https://api.example.com/users?q=hello');
     });
 });

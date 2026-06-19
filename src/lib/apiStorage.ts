@@ -1,3 +1,5 @@
+import type { FormFieldSnapshot } from '@/lib/multipart';
+
 export interface PersistedApiState {
     method: string;
     url: string;
@@ -5,6 +7,7 @@ export interface PersistedApiState {
     headers: { key: string; value: string; enabled: boolean }[];
     body: string;
     bodyContentType: string;
+    formFields: FormFieldSnapshot[];
     authType: string;
     apiKeyHeader: string;
     useProxy: boolean;
@@ -23,6 +26,7 @@ export interface RequestSnapshot {
     headers: { key: string; value: string; enabled: boolean }[];
     body: string;
     bodyContentType: string;
+    formFields: FormFieldSnapshot[];
     authType: string;
     apiKeyHeader: string;
     useProxy: boolean;
@@ -107,4 +111,21 @@ export function saveApiCollections(collections: SavedRequestCollection[]): void 
     } catch {
         /* quota or private mode */
     }
+}
+
+/** Backfill snapshots saved before formFields existed. */
+export function normalizeSnapshot(snapshot: Partial<RequestSnapshot>): RequestSnapshot {
+    return {
+        method: snapshot.method ?? 'GET',
+        url: snapshot.url ?? '',
+        params: snapshot.params ?? [],
+        headers: snapshot.headers ?? [],
+        body: snapshot.body ?? '',
+        bodyContentType: snapshot.bodyContentType ?? 'application/json',
+        formFields: snapshot.formFields ?? [],
+        authType: snapshot.authType ?? 'none',
+        apiKeyHeader: snapshot.apiKeyHeader ?? 'X-API-Key',
+        useProxy: Boolean(snapshot.useProxy),
+        timeoutMs: snapshot.timeoutMs ?? 30_000,
+    };
 }
