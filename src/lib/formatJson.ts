@@ -75,6 +75,18 @@ export function analyzeJson(obj: unknown): JsonStats {
     return { keys: keyCount, depth: maxDepth, size };
 }
 
+export function formatJsonParseError(raw: string, error: SyntaxError): string {
+    const match = error.message.match(/position (\d+)/i);
+    if (!match) return error.message;
+
+    const pos = Number(match[1]);
+    const before = raw.slice(0, pos);
+    const line = before.split('\n').length;
+    const lastNewline = before.lastIndexOf('\n');
+    const column = pos - lastNewline;
+    return `${error.message} (line ${line}, column ${column})`;
+}
+
 export function formatJson(raw: string, indent: number): FormatJsonResult {
     const trimmed = raw.trim();
     if (!trimmed) return { result: '', status: 'idle' };
@@ -83,6 +95,55 @@ export function formatJson(raw: string, indent: number): FormatJsonResult {
         const formatted = JSON.stringify(parsed, null, indent);
         return { result: formatted, status: 'valid', stats: analyzeJson(parsed) };
     } catch (e) {
-        return { result: raw, status: 'error', error: (e as Error).message };
+        return {
+            result: raw,
+            status: 'error',
+            error: formatJsonParseError(raw, e as SyntaxError),
+        };
+    }
+}
+
+export interface ProcessJsonOptions {
+    indent: number;
+    compact: boolean;
+    sortKeys: boolean;
+    stripEmpty: boolean;
+}
+
+export interface ProcessJsonResult {
+    output: string;
+    status: FormatStatus;
+    error?: string;
+    stats: JsonStats | null;
+    parsed: unknown | null;
+}
+
+/** Parse once, apply transforms, and stringify — used by the JSON formatter UI. */
+export function processJson(raw: string, options: ProcessJsonOptions): ProcessJsonResult {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+        return { output: '', status: 'idle', stats: null, parsed: null };
+    }
+
+    try {
+        let parsed: unknown = JSON.parse(trimmed);
+        if (options.stripEmpty) parsed = stripEmptyJson(parsed);
+        if (options.sortKeys) parsed = sortJsonKeys(parsed);
+
+        const output = options.compact ? JSON.stringify(parsed) : JSON.stringify(parsed, null, options.indent);
+        return {
+            output,
+            status: 'valid',
+            stats: analyzeJson(parsed),
+            parsed,
+        };
+    } catch (e) {
+        return {
+            output: raw,
+            status: 'error',
+            error: formatJsonParseError(trimmed, e as SyntaxError),
+            stats: null,
+            parsed: null,
+        };
     }
 }

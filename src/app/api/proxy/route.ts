@@ -1,4 +1,14 @@
-import { assertProxyTargetAllowed, clampProxyTimeoutMs, PROXY_MAX_BODY_BYTES } from '@/lib/proxyValidate';
+import {
+    assertProxyTargetAllowedAsync,
+    clampProxyTimeoutMs,
+    isProxyEnabled,
+    PROXY_MAX_BODY_BYTES,
+    PROXY_MAX_RESPONSE_BYTES,
+} from '@/lib/proxyValidate';
+import { enforceProxyRateLimit } from '@/lib/ratelimit';
+import { readResponseBodyWithLimit } from '@/lib/readResponseBody';
+
+export const runtime = 'nodejs';
 
 const FORWARD_HEADER_BLOCK = new Set([
     'host',
@@ -18,7 +28,28 @@ interface ProxyRequestBody {
     timeoutMs?: number;
 }
 
+function rateLimitResponse(reset: number) {
+    return Response.json(
+        { error: 'Too many requests' },
+        {
+            status: 429,
+            headers: {
+                'Retry-After': String(Math.max(1, Math.ceil((reset - Date.now()) / 1000))),
+            },
+        },
+    );
+}
+
 export async function POST(request: Request) {
+    if (!isProxyEnabled()) {
+        return Response.json({ error: 'Proxy is disabled' }, { status: 403 });
+    }
+
+    const rateLimit = await enforceProxyRateLimit(request);
+    if (!rateLimit.success) {
+        return rateLimitResponse(rateLimit.reset);
+    }
+
     let payload: ProxyRequestBody;
     try {
         payload = (await request.json()) as ProxyRequestBody;
@@ -33,7 +64,7 @@ export async function POST(request: Request) {
 
     let target: URL;
     try {
-        target = assertProxyTargetAllowed(url);
+        target = await assertProxyTargetAllowedAsync(url);
     } catch (e) {
         return Response.json({ error: (e as Error).message }, { status: 400 });
     }
@@ -62,7 +93,7 @@ export async function POST(request: Request) {
             redirect: 'follow',
         });
 
-        const text = await upstream.text();
+        const text = await readResponseBodyWithLimit(upstream, PROXY_MAX_RESPONSE_BYTES);
         const responseHeaders: Record<string, string> = {};
         upstream.headers.forEach((value, key) => {
             responseHeaders[key] = value;
@@ -76,7 +107,8 @@ export async function POST(request: Request) {
         });
     } catch (e) {
         const message = (e as Error).name === 'AbortError' ? 'Request timed out' : (e as Error).message;
-        return Response.json({ error: message }, { status: 502 });
+        const status = message.includes('too large') ? 413 : 502;
+        return Response.json({ error: message }, { status });
     } finally {
         clearTimeout(timeout);
     }

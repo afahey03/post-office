@@ -1,5 +1,6 @@
 import type { BodyContentType, HttpMethod } from './apiRequest';
 import type { RequestSnapshot } from './apiStorage';
+import { buildUrlWithParams } from './buildUrl';
 
 interface CurlTokenizeState {
     inSingle: boolean;
@@ -160,6 +161,8 @@ function quote(value: string): string {
 
 export function requestToCurl(snapshot: RequestSnapshot): string {
     const parts = ['curl'];
+    const fullUrl = buildUrlWithParams(snapshot.url, snapshot.params);
+
     if (snapshot.method !== 'GET') {
         parts.push('-X', snapshot.method);
     }
@@ -174,6 +177,6 @@ export function requestToCurl(snapshot: RequestSnapshot): string {
         parts.push('--data-raw', quote(snapshot.body));
     }
 
-    parts.push(quote(snapshot.url));
+    parts.push(quote(fullUrl));
     return parts.join(' ');
 }

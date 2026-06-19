@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         }
 
         const value = await incrementStat(STATS_KEYS.siteVisits);
-        return Response.json({ ok: true, count: value });
+        return Response.json({ ok: true, count: value ?? 0, tracked: value !== null });
     } catch (error) {
         console.error('visit tracking error', error);
         return Response.json({ ok: false, error: 'Failed to track site visit event' }, { status: 500 });

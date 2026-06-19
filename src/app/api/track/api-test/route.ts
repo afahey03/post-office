@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         }
 
         const value = await incrementStat(STATS_KEYS.apiTests);
-        return Response.json({ ok: true, count: value });
+        return Response.json({ ok: true, count: value ?? 0, tracked: value !== null });
     } catch (error) {
         console.error('api-test tracking error', error);
         return Response.json({ ok: false, error: 'Failed to track API test event' }, { status: 500 });

@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Copy, Check, Eraser, Minimize2 } from 'lucide-react';
 import JsonCodeEditor from '@/components/JsonCodeEditor';
-import { analyzeJson, formatJson, sortJsonKeys, stripEmptyJson, type FormatStatus } from '@/lib/formatJson';
+import { processJson, type FormatStatus } from '@/lib/formatJson';
 import { syntaxHighlight } from '@/lib/jsonHighlight';
 import { copyToClipboard } from '@/lib/copyToClipboard';
 
@@ -54,21 +54,14 @@ export default function JsonFormatter() {
     }, []);
 
     const process = useCallback((raw: string, ind: number, compact: boolean, sort: boolean, strip: boolean) => {
-        const res = formatJson(raw, ind);
-        if (res.status === 'valid') {
-            const parsed = JSON.parse(raw);
-            const transformed = strip ? stripEmptyJson(parsed) : parsed;
-            const normalized = sort ? sortJsonKeys(transformed) : transformed;
-            const nextOutput = compact ? JSON.stringify(normalized) : JSON.stringify(normalized, null, ind);
-            setOutput(nextOutput);
-            setStats(analyzeJson(normalized));
-            void trackSuccessfulFormat(raw, nextOutput);
-        } else {
-            setOutput(res.result);
-            setStats(res.stats || null);
-        }
+        const res = processJson(raw, { indent: ind, compact, sortKeys: sort, stripEmpty: strip });
+        setOutput(res.output);
+        setStats(res.stats);
         setStatus(res.status);
         setError(res.error || '');
+        if (res.status === 'valid') {
+            void trackSuccessfulFormat(raw, res.output);
+        }
     }, [trackSuccessfulFormat]);
 
     useEffect(() => {

@@ -6,6 +6,8 @@ import "./tools.css";
 import NavBar from "@/components/NavBar";
 import VisitTracker from '@/components/VisitTracker';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://post-office.dev';
+
 const inter = Inter({
     subsets: ["latin"],
     weight: ["400", "500", "600"],
@@ -19,11 +21,28 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "Post Office",
-    description: "JSON Formatter & API Tester",
+    metadataBase: new URL(siteUrl),
+    title: {
+        default: 'Post Office',
+        template: '%s | Post Office',
+    },
+    description: 'Format JSON and test HTTP APIs in your browser — fast, account-free, and local-first.',
     icons: {
-        icon: "/favicon.ico",
-        shortcut: "/favicon.ico",
+        icon: '/favicon.ico',
+        shortcut: '/favicon.ico',
+    },
+    openGraph: {
+        type: 'website',
+        locale: 'en_US',
+        url: siteUrl,
+        siteName: 'Post Office',
+        title: 'Post Office — JSON Formatter & API Tester',
+        description: 'Format JSON and test HTTP APIs in your browser — fast, account-free, and local-first.',
+    },
+    twitter: {
+        card: 'summary',
+        title: 'Post Office — JSON Formatter & API Tester',
+        description: 'Format JSON and test HTTP APIs in your browser — fast, account-free, and local-first.',
     },
 };
 

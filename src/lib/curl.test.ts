@@ -37,4 +37,20 @@ describe('requestToCurl', () => {
         expect(curl).toContain('Content-Type: application/json');
         expect(curl).toContain('--data-raw');
     });
+
+    it('includes query params in the URL', () => {
+        const curl = requestToCurl({
+            method: 'GET',
+            url: 'https://api.example.com/items',
+            params: [{ key: 'page', value: '2', enabled: true }],
+            headers: [],
+            body: '',
+            bodyContentType: 'application/json',
+            authType: 'none',
+            apiKeyHeader: 'X-API-Key',
+            useProxy: false,
+            timeoutMs: 30000,
+        });
+        expect(curl).toContain('page=2');
+    });
 });

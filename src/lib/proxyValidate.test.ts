@@ -1,5 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import { assertProxyTargetAllowed, clampProxyTimeoutMs } from './proxyValidate';
+import {
+    assertHostNotBlocked,
+    assertProxyTargetAllowed,
+    clampProxyTimeoutMs,
+    normalizeHostname,
+} from './proxyValidate';
+
+describe('normalizeHostname', () => {
+    it('decodes decimal IPv4', () => {
+        expect(normalizeHostname('2130706433')).toBe('127.0.0.1');
+    });
+
+    it('decodes hex IPv4', () => {
+        expect(normalizeHostname('0x7f000001')).toBe('127.0.0.1');
+    });
+
+    it('leaves normal hostnames unchanged', () => {
+        expect(normalizeHostname('Example.COM')).toBe('example.com');
+    });
+});
+
+describe('assertHostNotBlocked', () => {
+    it('blocks decimal-encoded loopback', () => {
+        expect(() => assertHostNotBlocked('2130706433')).toThrow(/not allowed/i);
+    });
+
+    it('blocks hex-encoded loopback', () => {
+        expect(() => assertHostNotBlocked('0x7f000001')).toThrow(/not allowed/i);
+    });
+});
 
 describe('assertProxyTargetAllowed', () => {
     it('allows public https URLs', () => {
@@ -13,6 +42,10 @@ describe('assertProxyTargetAllowed', () => {
 
     it('blocks private IPs', () => {
         expect(() => assertProxyTargetAllowed('http://192.168.1.1/')).toThrow(/private/i);
+    });
+
+    it('blocks decimal-encoded private targets', () => {
+        expect(() => assertProxyTargetAllowed('http://2130706433/')).toThrow(/not allowed/i);
     });
 
     it('blocks .local hostnames', () => {

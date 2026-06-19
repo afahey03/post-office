@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeJson, formatJson, sortJsonKeys, stripEmptyJson } from './formatJson';
+import { analyzeJson, formatJson, formatJsonParseError, processJson, sortJsonKeys, stripEmptyJson } from './formatJson';
 
 describe('formatJson', () => {
     it('returns idle for empty input', () => {
@@ -47,5 +47,39 @@ describe('stripEmptyJson', () => {
             nested: { y: null, z: 1 },
         }) as Record<string, unknown>;
         expect(stripped).toEqual({ keep: 'x', nested: { z: 1 } });
+    });
+});
+
+describe('formatJsonParseError', () => {
+    it('adds line and column when position is present', () => {
+        const raw = '{\n  bad\n}';
+        try {
+            JSON.parse(raw);
+        } catch (e) {
+            const message = formatJsonParseError(raw, e as SyntaxError);
+            expect(message).toMatch(/line 2, column/);
+        }
+    });
+});
+
+describe('processJson', () => {
+    it('returns idle for empty input', () => {
+        expect(processJson('  ', { indent: 2, compact: false, sortKeys: false, stripEmpty: false })).toEqual({
+            output: '',
+            status: 'idle',
+            stats: null,
+            parsed: null,
+        });
+    });
+
+    it('sorts keys and strips empty values in one pass', () => {
+        const res = processJson('{"z":"","a":{"b":2,"a":1}}', {
+            indent: 2,
+            compact: false,
+            sortKeys: true,
+            stripEmpty: true,
+        });
+        expect(res.status).toBe('valid');
+        expect(res.output).toBe('{\n  "a": {\n    "a": 1,\n    "b": 2\n  }\n}');
     });
 });

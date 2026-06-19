@@ -1,5 +1,6 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+import { isRedisConfigured } from '@/lib/redis';
 
 interface LimitResult {
     success: boolean;
@@ -8,7 +9,7 @@ interface LimitResult {
 
 let redisForLimit: Redis | null = null;
 
-function getClientIp(request: Request): string {
+export function getClientIp(request: Request): string {
     const forwardedFor = request.headers.get('x-forwarded-for');
     if (forwardedFor) {
         const first = forwardedFor.split(',')[0]?.trim();
@@ -35,6 +36,10 @@ function getRedisClient(): Redis {
     return redisForLimit;
 }
 
+function shouldSkipRateLimit(): boolean {
+    return process.env.UPSTASH_RATE_LIMIT_ENABLED === 'false' || !isRedisConfigured();
+}
+
 const jsonFormatterLimiter = () =>
     new Ratelimit({
         redis: getRedisClient(),
@@ -59,15 +64,37 @@ const siteVisitLimiter = () =>
         prefix: 'ratelimit:track:visit',
     });
 
+const proxyLimiter = () =>
+    new Ratelimit({
+        redis: getRedisClient(),
+        limiter: Ratelimit.slidingWindow(15, '60 s'),
+        analytics: true,
+        prefix: 'ratelimit:proxy',
+    });
+
 export async function enforceTrackRateLimit(type: 'json' | 'api' | 'visit', request: Request): Promise<LimitResult> {
-    if (process.env.UPSTASH_RATE_LIMIT_ENABLED === 'false') {
+    if (shouldSkipRateLimit()) {
         return { success: true, reset: 0 };
     }
 
     const ip = getClientIp(request);
-    const limiter = type === 'json' ? jsonFormatterLimiter() : type === 'api' ? apiTesterLimiter() : siteVisitLimiter();
+    const limiter =
+        type === 'json' ? jsonFormatterLimiter() : type === 'api' ? apiTesterLimiter() : siteVisitLimiter();
 
     const result = await limiter.limit(ip);
+    return {
+        success: result.success,
+        reset: result.reset,
+    };
+}
+
+export async function enforceProxyRateLimit(request: Request): Promise<LimitResult> {
+    if (shouldSkipRateLimit()) {
+        return { success: true, reset: 0 };
+    }
+
+    const ip = getClientIp(request);
+    const result = await proxyLimiter().limit(ip);
     return {
         success: result.success,
         reset: result.reset,

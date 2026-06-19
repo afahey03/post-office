@@ -73,7 +73,11 @@ Post Office can track public usage counters (formats, API tests, visits) with Up
 UPSTASH_REDIS_REST_URL="https://<your-db>.upstash.io"
 UPSTASH_REDIS_REST_TOKEN="<your-upstash-token>"
 UPSTASH_RATE_LIMIT_ENABLED="true"
+PROXY_ENABLED="true"
+NEXT_PUBLIC_SITE_URL="https://your-domain.com"
 ```
+
+When Redis env vars are omitted, the app runs normally but public stats and tracking are no-op. Set `PROXY_ENABLED="false"` to disable the CORS-bypass proxy endpoint.
 
 3. Deploy with the same variables in your hosting provider.
 
