@@ -34,7 +34,7 @@ export default function Home() {
                     <div className="home-contact-name">Aidan Fahey</div>
                     <div className="home-contact-links">
                         <a
-                            href="https://github.com/afahey03/Post-Office"
+                            href="https://github.com/afahey03/post-office"
                             target="_blank"
                             rel="noreferrer"
                             className="home-contact-link"
